@@ -33,7 +33,7 @@
     /* 折りたたみ中のツイート本体：一行分の高さに固定 */
     .xzf-zombie-collapsed {
       position: relative !important;
-      border: 1.5px solid #502b37 !important;
+      border: 1.5px solid #553e46 !important;
       border-radius: 8px !important;
       margin: 2px 0 !important;
       height: 36px !important;
@@ -77,7 +77,7 @@
     .xzf-overlay span {
       font-size: 12px;
       font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif;
-      color: #572f38;
+      color: #814250;
       letter-spacing: 0.3px;
       pointer-events: none;
     }
@@ -90,7 +90,7 @@
       right: 16px;
       z-index: 99999;
       background: rgba(13,17,23,0.92);
-      border: 1px solid #663b49;
+      border: 1px solid #5f424b;
       border-radius: 20px;
       padding: 8px 14px;
       font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif;
@@ -477,7 +477,13 @@
     }
   }
 
+  // /username/status/123456 の形式 = ツイート詳細（リプライ）ページのみ動作
+  function isReplyPage() {
+    return /^\/[^/]+\/status\/\d+/.test(location.pathname);
+  }
+
   function scanAll() {
+    if (!isReplyPage()) return; // タイムライン等では何もしない
     const articles = [...document.querySelectorAll('article[data-testid="tweet"]')];
     articles.forEach((a, i) => processArticle(a, i));
   }
@@ -518,13 +524,24 @@
   let timer = null;
   const observer = new MutationObserver(() => {
     clearTimeout(timer);
-    timer = setTimeout(scanAll, CONFIG.debounceMs);
+    timer = setTimeout(() => {
+      syncPanelVisibility();
+      scanAll();
+    }, CONFIG.debounceMs);
   });
 
   function init() {
     buildPanel();
+    syncPanelVisibility();
     scanAll();
     observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // URLが変わるたびにパネル表示・スキャンを同期
+  function syncPanelVisibility() {
+    const panel = document.getElementById('xzf-panel');
+    if (!panel) return;
+    panel.style.display = isReplyPage() ? 'flex' : 'none';
   }
 
   if (document.readyState === 'loading') {
