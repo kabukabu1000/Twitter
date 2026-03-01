@@ -33,7 +33,7 @@
     /* 折りたたみ中のツイート本体：一行分の高さに固定 */
     .xzf-zombie-collapsed {
       position: relative !important;
-      border: 1.5px solid #3b2f33 !important;
+      border: 1.5px solid #502b37 !important;
       border-radius: 8px !important;
       margin: 2px 0 !important;
       height: 36px !important;
@@ -77,7 +77,7 @@
     .xzf-overlay span {
       font-size: 12px;
       font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif;
-      color: #6b464e;
+      color: #572f38;
       letter-spacing: 0.3px;
       pointer-events: none;
     }
@@ -86,97 +86,40 @@
     /* ---- UI パネル ---- */
     #xzf-panel {
       position: fixed;
-      bottom: 80px;
+      bottom: 70px;
       right: 16px;
       z-index: 99999;
-      background: #0d1117;
-      border: 1px solid #21262d;
-      border-radius: 18px;
-      padding: 16px 20px 14px;
+      background: rgba(13,17,23,0.92);
+      border: 1px solid #663b49;
+      border-radius: 20px;
+      padding: 8px 14px;
       font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif;
-      font-size: 12.5px;
       color: #c9d1d9;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.7);
-      min-width: 230px;
-      user-select: none;
-    }
-    #xzf-panel h3 {
-      margin: 0 0 12px;
-      font-size: 13.5px;
-      color: #e0245e;
-      letter-spacing: 0.6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
+      user-select: none;
+      cursor: default;
+      white-space: nowrap;
     }
-    .xzf-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-    .xzf-stat-box {
-      background: #161b22;
-      border-radius: 10px;
-      padding: 8px 10px;
-      text-align: center;
-    }
-    .xzf-stat-box .val { font-size: 20px; font-weight: 800; color: #fff; }
-    .xzf-stat-box .lbl { font-size: 10px; color: #8b949e; margin-top: 2px; }
-    .xzf-breakdown {
+    #xzf-panel .xzf-icon { font-size: 15px; }
+    #xzf-panel .xzf-stat {
       font-size: 11px;
       color: #8b949e;
-      background: #161b22;
-      border-radius: 8px;
-      padding: 8px 10px;
-      margin-bottom: 10px;
-      max-height: 90px;
-      overflow-y: auto;
-    }
-    .xzf-breakdown div { margin: 2px 0; }
-    .xzf-breakdown span { color: #f0883e; font-weight: bold; }
-    #xzf-threshold-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-      font-size: 11.5px;
+      gap: 4px;
     }
-    #xzf-threshold-row input {
-      width: 48px;
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 6px;
+    #xzf-panel .xzf-stat .val {
+      font-size: 13px;
+      font-weight: 800;
       color: #fff;
-      padding: 4px 6px;
-      font-size: 12px;
     }
-    #xzf-panel button {
-      width: 100%;
-      padding: 8px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 700;
-      transition: filter 0.15s;
-      margin-top: 5px;
-    }
-    #xzf-panel button:hover { filter: brightness(1.15); }
-    #xzf-btn-toggle { background: #1f6feb; color: #fff; }
-    #xzf-btn-restore { background: #21262d; color: #c9d1d9; }
-    #xzf-btn-close   { background: transparent; color: #484f58; font-size: 11px; }
-
-    #xzf-minimized {
-      position: fixed;
-      bottom: 80px;
-      right: 16px;
-      z-index: 99999;
-      background: #0d1117;
-      border: 1.5px solid #e0245e;
-      border-radius: 50%;
-      width: 46px; height: 46px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 22px;
-      box-shadow: 0 0 18px rgba(224,36,94,0.45);
+    #xzf-panel .xzf-stat.blocked .val { color: #e0245e; }
+    #xzf-panel .xzf-divider {
+      width: 1px; height: 16px;
+      background: #30363d;
     }
   `);
 
@@ -537,7 +480,6 @@
   function scanAll() {
     const articles = [...document.querySelectorAll('article[data-testid="tweet"]')];
     articles.forEach((a, i) => processArticle(a, i));
-    updateBreakdown();
   }
 
   // =============================================
@@ -547,78 +489,19 @@
     const panel = document.createElement('div');
     panel.id = 'xzf-panel';
     panel.innerHTML = `
-      <h3>🧟 ゾンビフィルター JP</h3>
-      <div class="xzf-stats">
-        <div class="xzf-stat-box"><div class="val" id="xzf-scanned">0</div><div class="lbl">スキャン</div></div>
-        <div class="xzf-stat-box"><div class="val" id="xzf-hidden" style="color:#e0245e">0</div><div class="lbl">ブロック済み</div></div>
+      <span class="xzf-icon">🧟</span>
+      <div class="xzf-stat">
+        <span class="val" id="xzf-scanned">0</span>
+        <span>スキャン</span>
       </div>
-      <div class="xzf-breakdown" id="xzf-breakdown"><div style="color:#484f58">（まだ検出なし）</div></div>
-      <div id="xzf-threshold-row">
-        <label for="xzf-thr-input">閾値スコア:</label>
-        <input id="xzf-thr-input" type="number" min="1" max="10" value="${CONFIG.threshold}">
-        <span style="color:#8b949e">/ 10</span>
+      <div class="xzf-divider"></div>
+      <div class="xzf-stat blocked">
+        <span class="val" id="xzf-hidden">0</span>
+        <span>ブロック</span>
       </div>
-      <button id="xzf-btn-toggle">モード: ${CONFIG.mode === 'hide' ? '🙈 完全非表示' : '🔽 折りたたみ'}</button>
-      <button id="xzf-btn-restore">🔄 すべて復元</button>
-      <button id="xzf-btn-close">▲ 最小化</button>
     `;
     document.body.appendChild(panel);
 
-    const mini = document.createElement('div');
-    mini.id = 'xzf-minimized';
-    mini.title = 'ゾンビフィルターを開く';
-    mini.textContent = '🧟';
-    document.body.appendChild(mini);
-
-    // 閾値変更
-    document.getElementById('xzf-thr-input').addEventListener('change', (e) => {
-      const v = parseInt(e.target.value, 10);
-      if (v >= 1 && v <= 10) {
-        CONFIG.threshold = v;
-        GM_setValue('zombie_threshold', v);
-      }
-    });
-
-    // モード切替
-    document.getElementById('xzf-btn-toggle').addEventListener('click', () => {
-      CONFIG.mode = CONFIG.mode === 'hide' ? 'collapse' : 'hide';
-      GM_setValue('zombie_mode', CONFIG.mode);
-      document.getElementById('xzf-btn-toggle').textContent =
-        `モード: ${CONFIG.mode === 'hide' ? '🙈 完全非表示' : '🔽 折りたたみ'}`;
-      document.querySelectorAll('[data-xzf-score]').forEach(a => {
-        a.classList.toggle('xzf-zombie-hidden', CONFIG.mode === 'hide');
-        a.classList.toggle('xzf-zombie-collapsed', CONFIG.mode === 'collapse');
-        if (CONFIG.mode === 'collapse') {
-          a.classList.remove('xzf-expanded');
-          const reasons = (a.dataset.xzfReasons || '').split(', ');
-          attachOverlay(a, getLabel(reasons));
-        }
-      });
-    });
-
-    // 復元
-    document.getElementById('xzf-btn-restore').addEventListener('click', () => {
-      document.querySelectorAll('[data-xzf-score]').forEach(a => {
-        a.classList.remove('xzf-zombie-hidden', 'xzf-zombie-collapsed', 'xzf-expanded');
-        a.querySelector('.xzf-overlay')?.remove();
-        delete a.dataset.xzfScanned;
-        delete a.dataset.xzfScore;
-      });
-      hiddenCount = 0; scannedCount = 0;
-      Object.keys(reasonCounter).forEach(k => delete reasonCounter[k]);
-      Object.keys(handleReplyCount).forEach(k => delete handleReplyCount[k]);
-      updatePanel(); updateBreakdown();
-    });
-
-    // 最小化
-    document.getElementById('xzf-btn-close').addEventListener('click', () => {
-      panel.style.display = 'none';
-      mini.style.display = 'flex';
-    });
-    mini.addEventListener('click', () => {
-      panel.style.display = 'block';
-      mini.style.display = 'none';
-    });
   }
 
   function updatePanel() {
@@ -628,18 +511,6 @@
     if (h) h.textContent = hiddenCount;
   }
 
-  function updateBreakdown() {
-    const el = document.getElementById('xzf-breakdown');
-    if (!el) return;
-    const sorted = Object.entries(reasonCounter).sort((a,b) => b[1]-a[1]).slice(0,6);
-    if (sorted.length === 0) {
-      el.innerHTML = '<div style="color:#484f58">（まだ検出なし）</div>';
-      return;
-    }
-    el.innerHTML = sorted.map(([r, n]) =>
-      `<div>${r}: <span>${n}件</span></div>`
-    ).join('');
-  }
 
   // =============================================
   //  MutationObserver（SPA対応）
